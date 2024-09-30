@@ -89,3 +89,40 @@ def register_instances(elbv2,target_group_arn, instance_ids):
         print(f"Failed to register instances {instance_ids} to target group {target_group_arn}: {e}")
     except Exception as e:
         print(f"An unexpected error occurred while registering instances {instance_ids}: {e}")
+
+
+
+def wait_for_target_group_health(elbv2,target_group_arn, max_retries=10, delay=30):
+    """
+    Waits for all instances in the target group to become healthy.
+    
+    Args:
+    target_group_arn (str): The ARN of the target group.
+    max_retries (int): Maximum number of retries before giving up. Default is 10.
+    delay (int): Delay in seconds between each retry. Default is 30 seconds.
+    
+    Returns:
+    bool: True if all instances become healthy within the retry limit, False otherwise.
+    """
+    for attempt in range(max_retries):
+        response = elbv2.describe_target_health(TargetGroupArn=target_group_arn)
+        all_healthy = True
+        print(f"Attempt {attempt + 1}/{max_retries}: Checking Target Group Health...")
+
+        for target in response['TargetHealthDescriptions']:
+            instance_id = target['Target']['Id']
+            health_status = target['TargetHealth']['State']
+            print(f"Instance ID: {instance_id} - Health Status: {health_status}")
+            
+            if health_status != 'healthy':
+                all_healthy = False
+
+        if all_healthy:
+            print("All instances are healthy.")
+            return True
+        else:
+            print(f"Some instances are not healthy. Waiting {delay} seconds before retrying...")
+            time.sleep(delay)
+
+    print(f"Target group did not become healthy after {max_retries} attempts.")
+    return False
