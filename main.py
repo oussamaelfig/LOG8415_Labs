@@ -15,6 +15,8 @@ from target_groups import create_target_group,register_instances,wait_for_target
 from cloudwatch_loadbalancer import get_load_balancer_arn,plot_metrics,get_load_balancer_request_count
 
 
+#terminate ressources
+from terminate_resources import delete_all_load_balancers,delete_all_target_groups,terminate_all_instances
 
 # Creating an EC2 client
 ec2 = boto3.client('ec2',region_name='us-east-1')
@@ -148,3 +150,12 @@ if lb_arn:
     # Fetch data and plot the RequestCount
     timestamps, values = get_load_balancer_request_count(lb_arn)
     plot_metrics(timestamps, values)
+  
+#15. Terminate ressources
+
+delete_all_load_balancers()
+delete_all_target_groups()
+terminate_all_instances()
+
+
+print("All load balancers, target groups, EC2 instances have been deleted.")
