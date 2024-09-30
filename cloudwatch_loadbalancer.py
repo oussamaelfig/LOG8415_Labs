@@ -161,3 +161,58 @@ def get_load_balancer_request_count(lb_arn):
         print(f"Error retrieving metrics: {e}")
         return [], []
 
+
+# Function to plot the RequestCount over time and save it to a directory
+def plot_metrics(timestamps, values, directory="images"):
+    """
+    This function plots the RequestCount metric over time and saves the plot as a PNG file in the specified directory.
+    
+    Steps:
+    1. The function accepts three parameters: `timestamps` (list of timestamps), `values` (list of request counts), 
+       and `directory` (the directory to save the plot, default is 'images').
+    2. It first checks if there is data to plot. If either `timestamps` or `values` is empty, a message is printed, 
+       and the function returns.
+    3. The function checks if the specified directory exists. If not, it creates the directory.
+    4. It then generates a line plot of the request counts over time.
+    5. The plot includes labeled axes, a title, and a legend. The x-axis labels are rotated for readability.
+    6. The plot is saved as a PNG file in the specified directory, and the file path is printed.
+    7. Finally, the plot is displayed using `plt.show()`.
+
+    Parameters:
+        timestamps: A list of timestamps for the RequestCount metric.
+        values: A list of request count values corresponding to the timestamps.
+        directory: The directory where the plot will be saved (default is 'images').
+
+    Returns:
+        None. The function saves the plot as a file and displays it.
+
+    Raises:
+        If there is an issue with file creation or plotting, an exception may occur.
+    """
+
+    # Check if there is data to plot
+    if not timestamps or not values:
+        print("No data to plot.")
+        return
+    
+    # Create the directory if it does not exist
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    # Plotting the RequestCount data
+    plt.figure(figsize=(10, 6))  # Set figure size
+    plt.plot(timestamps, values, marker='o', color='blue', label='Request Count')  # Plot with markers
+    plt.xlabel('Time')  # Label for the x-axis
+    plt.ylabel('Request Count')  # Label for the y-axis
+    plt.title('Request Count Over Time for Load Balancer')  # Title of the plot
+    plt.xticks(rotation=45)  # Rotate the x-axis labels for better readability
+    plt.legend()  # Show the legend
+    plt.tight_layout()  # Adjust the layout to prevent overlapping elements
+
+    # Save the plot as a PNG file in the specified directory
+    file_path = os.path.join(directory, 'request_count_plot.png')
+    plt.savefig(file_path)  # Save the plot as a file
+    plt.show()  # Display the plot
+
+    # Print the file path where the plot is saved
+    print(f"Plot saved to {file_path}")
