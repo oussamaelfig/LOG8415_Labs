@@ -64,3 +64,28 @@ def create_target_group(elbv2, group_name, vpc_id, path):
         else:
             raise e
 
+#Register instances 
+# Function to register a list of instances to a target group
+def register_instances(elbv2,target_group_arn, instance_ids):
+    """
+    Registers a list of EC2 instances to a specific target group.
+
+    Args:
+    target_group_arn (str): The ARN of the target group where the instances will be registered.
+    instance_ids (list): A list of EC2 instance IDs to be registered.
+
+    Returns:
+    None: Registers the instances and prints success or error messages.
+    """
+
+    try:
+        # Register the instances to the target group
+        elbv2.register_targets(
+            TargetGroupArn=target_group_arn,
+            Targets=[{'Id': instance_id, 'Port': 8000} for instance_id in instance_ids]
+        )
+        print(f"Instances {instance_ids} successfully registered to target group {target_group_arn}.")
+    except ClientError as e:
+        print(f"Failed to register instances {instance_ids} to target group {target_group_arn}: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred while registering instances {instance_ids}: {e}")
