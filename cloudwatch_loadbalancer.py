@@ -42,3 +42,122 @@ def extract_lb_resource_from_arn(full_arn):
     else:
         # Raise an error if the ARN format is invalid
         raise ValueError("Invalid ARN format")
+
+
+# Function to dynamically retrieve the Load Balancer ARN
+def get_load_balancer_arn():
+    """
+    This function retrieves the Amazon Resource Name (ARN) of the first available load balancer
+    from AWS Elastic Load Balancing (ELB). It extracts the resource portion of the ARN using the 
+    `extract_lb_resource_from_arn` function.
+
+    Steps:
+    1. The function calls the `describe_load_balancers` method to retrieve all load balancers.
+    2. It checks if there are any load balancers in the response.
+    3. If load balancers are present, it extracts the full ARN of the first load balancer.
+    4. The resource portion of the ARN is extracted using the `extract_lb_resource_from_arn` function.
+    5. If no load balancers are found, it prints a message and returns `None`.
+    6. If an error occurs during the API call, it catches the exception, prints the error message, 
+       and returns `None`.
+
+    Returns:
+        The resource portion of the load balancer ARN (e.g., 'app/my-load-balancer/...') if successful.
+        If no load balancers are found or if an error occurs, the function returns `None`.
+
+    Raises:
+        Exception: Any errors during the API call are caught and handled.
+    """
+
+    try:
+        # Retrieve the list of load balancers from AWS
+        response = elb.describe_load_balancers()
+
+        # Check if there are load balancers in the response
+        if 'LoadBalancers' in response and len(response['LoadBalancers']) > 0:
+            # Assuming we're using the first load balancer in the list
+            full_lb_arn = response['LoadBalancers'][0]['LoadBalancerArn']
+
+            # Extract and return the resource part of the ARN
+            lb_arn = extract_lb_resource_from_arn(full_lb_arn)
+            return lb_arn
+        else:
+            # If no load balancers are found, print a message and return None
+            print("No load balancers found.")
+            return None
+
+    # Handle any exceptions during the API call
+    except Exception as e:
+        print(f"Error retrieving load balancer ARN: {e}")
+        return None
+
+
+# Function to fetch RequestCount metric data for the load balancer
+def get_load_balancer_request_count(lb_arn):
+    """
+    This function retrieves the request count for a specified Application Load Balancer (ALB) 
+    from AWS CloudWatch over the last 24 hours. The function fetches the `RequestCount` metric 
+    in 5-minute intervals and returns the timestamps and request count values.
+
+    Steps:
+    1. The function accepts the ARN of the load balancer as a parameter.
+    2. It checks if the `lb_arn` is provided. If not, it prints a message and returns empty lists.
+    3. The function calls `get_metric_statistics` from AWS CloudWatch to fetch the `RequestCount` metric
+       for the load balancer over the last 24 hours.
+    4. It extracts the timestamps and request count values from the response.
+    5. If no data is available, a message is printed. Otherwise, the data is sorted by timestamp and printed.
+    6. Finally, the function returns two lists: one for the timestamps and one for the request count values.
+    7. If an error occurs during the API call, the exception is caught, an error message is printed, and empty lists are returned.
+
+    Parameters:
+        lb_arn: The ARN of the load balancer to retrieve the request count for.
+
+    Returns:
+        Two lists: one for the timestamps and one for the request count values. If no data is available 
+        or an error occurs, empty lists are returned.
+
+    Raises:
+        Exception: Any errors during the API call are caught and handled.
+    """
+
+    # Check if the load balancer ARN is provided
+    if not lb_arn:
+        print("Load Balancer ARN is missing.")
+        return [], []
+
+    try:
+        # Fetch the RequestCount metric for the load balancer from CloudWatch over the last 24 hours
+        response = cloudwatch.get_metric_statistics(
+            Namespace='AWS/ApplicationELB',  # Namespace for ALB metrics
+            MetricName='RequestCount',  # Metric to retrieve (RequestCount)
+            Dimensions=[{'Name': 'LoadBalancer', 'Value': lb_arn}],  # Filter by load balancer ARN
+            StartTime=datetime.utcnow() - timedelta(hours=24),  # Last 24 hours
+            EndTime=datetime.utcnow(),  # Current time
+            Period=300,  # 5-minute intervals
+            Statistics=['Sum']  # Sum the request counts over each interval
+        )
+
+        # Extract timestamps and request count values from the response
+        timestamps = [datapoint['Timestamp'] for datapoint in response['Datapoints']]
+        values = [datapoint['Sum'] for datapoint in response['Datapoints']]
+
+        # If no data is available, print a message
+        if not timestamps or not values:
+            print("No data available.")
+        else:
+            # Sort the data by timestamp for chronological ordering
+            sorted_data = sorted(zip(timestamps, values), key=lambda x: x[0])
+            timestamps, values = zip(*sorted_data)
+
+            # Print out the number of requests at each timestamp
+            print("\nRequest Count Data:")
+            for time, value in zip(timestamps, values):
+                print(f"Time: {time}, Request Count: {value}")
+
+        # Return the timestamps and values
+        return timestamps, values
+
+    # Handle any exceptions during the API call
+    except Exception as e:
+        print(f"Error retrieving metrics: {e}")
+        return [], []
+
