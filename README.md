@@ -46,5 +46,7 @@ A **benchmarking** script sends multiple requests to the Load Balancer and measu
 The script includes functions to automate the creation of instances, deployment of the application, configuration of the Load Balancer, and the execution of tests.
 
 #### Command to run:
+1. run dependencies :
+pip install -r requirements.txt
 ```bash
 python main.py
