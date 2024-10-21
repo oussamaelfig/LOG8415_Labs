@@ -251,6 +251,28 @@ def setup_ml_app(ip_address, username, private_key_path,container_start_port):
 
 
 def set_up_orchestrator(ip_address, username, private_key_path):
+"""
+Sets up an orchestrator container on a remote EC2 instance.
+The function verifies SSH connectivity, prepares the attached volume,
+installs Docker, loads the orchestrator container from a tar file, and starts it.
+
+Args:
+    ip_address (str): Public IP address of the EC2 instance.
+    username (str): SSH username for the EC2 instance (typically 'ubuntu').
+    private_key_path (str): Path to the private key (.pem) used for SSH authentication.
+
+Steps:
+1. Verify SSH connection to ensure remote access.
+2. Format and mount the EBS volume to make it available for use.
+3. Install Docker and required plugins on the EC2 instance.
+4. Transfer the orchestrator Docker image (tar.gz) to the instance.
+5. Load the Docker image from the tar file into the Docker engine.
+6. Start the orchestrator container, exposing it on port 80.
+7. Verify that the container is running by listing all Docker containers.
+
+Returns:
+    None: The function performs operations directly on the remote instance.
+"""
     #Verifying ssh connection
     if not wait_for_ssh(ip_address, username, private_key_path):
         print(f"Failed to establish SSH connection to {ip_address}")
