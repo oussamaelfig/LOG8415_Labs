@@ -152,11 +152,11 @@ def setup_ml_app(ip_address, username, private_key_path,container_start_port):
         username (str): The SSH username (usually 'ubuntu').
         private_key_path (str): Path to the private key (.pem) used for SSH.
         container_start_port (int): The starting port number for the first container on this worker.
-        num_containers (int): The number of containers to run on this worker.
 
     Returns:
         dict: Information about the worker instance's IP, ports, and statuses for each container.
     """
+
     if not wait_for_ssh(ip_address, username, private_key_path):
         print(f"Failed to establish SSH connection to {ip_address}")
         return
